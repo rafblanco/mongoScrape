@@ -24,6 +24,10 @@ app.set("view engine", "handlebars");
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoScrape";
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
+app.get("/", function(req, res){
+    res.render("index")
+});
+
 app.get("/scrape", function (req, res) {
     axios.get("https://www.washingtonpost.com/sports/mlb").then(function (response) {
         var $ = cheerio.load(response.data);
