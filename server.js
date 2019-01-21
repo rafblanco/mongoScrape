@@ -24,17 +24,23 @@ app.set("view engine", "handlebars");
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoScrape";
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
-app.get("/", function(req, res){
-    res.render("index")
+app.get("/", function (req, res) {
+    db.Article.find({})
+        .then(function (articles) {
+            res.render("index", { articles: articles });
+        })
+        .catch(function (err) {
+            console.log(err)
+        })
 });
 
 app.get("/scrape", function (req, res) {
     axios.get("https://www.washingtonpost.com/sports/mlb").then(function (response) {
         var $ = cheerio.load(response.data);
-        
+
         var result = {};
         $(".story-body").each(function () {
-            
+
 
             result.title = $(this).find("h3").children("a").text();
             result.summary = $(this).find("p").text();
@@ -49,56 +55,45 @@ app.get("/scrape", function (req, res) {
                     console.log(err);
                 })
         })
-        res.render("index", result);
+        // res.render("index", result);
+        res.send("complete")
     })
-        // .then(function () {
-        //     // Find all results from the Article collection in the db
-        //     db.Article.find({}, function (error, articles) {
-        //         // Throw any errors to the console
-        //         if (error) {
-        //             console.log(error);
-        //         }
-        //         // If there are no errors, send the data to the browser as json
-        //         else {
-        //             res.render("index", articles);
-        //         }
-        //     });
-        // })
+
 })
 
 
 // Route for getting all Articles from the db
 app.get("/all", function (req, res) {
-    // Find all results from the Article collection in the db
-    db.Article.find({}, function (error, found) {
-        // Throw any errors to the console
-        if (error) {
-            console.log(error);
-        }
-        // If there are no errors, send the data to the browser as json
-        else {
-            res.json(found);
-        }
-    });
+    db.Article.find({})
+        .then(function (articles) {
+            res.render("index", { articles: articles });
+        })
+        .catch(function (err) {
+            console.log(err)
+        })
 });
 
 // Route for getting comments for a specific article
-app.get("/articles/:id", function (req, res) {
-    db.Article.findOne({ id: req.params.id })
+app.get("/article/:id", function (req, res) {
+
+    db.Article.findOne({_id: req.params.id})
         .populate("comment")
-        .then(function (dbArticle) {
-            res.json(dbArticle)
+        .then(function (comments) {
+            console.log(comments)
+            // res.render("index", { comment: comment })
+            res.json(comments)
         })
         .catch(function (err) {
             res.json(err)
         })
 });
 
-// Route for posting comments to a specific article
+// Route for posting comments for a specific article
 app.post("/article/:id", function (req, res) {
+    // console.log(req.body.newCom)
     db.Comment.create(req.body)
         .then(function (dbComment) {
-            db.Article.findOneAndUpdate({ id: req.params.id }, { comment: dbComment._id }, { new: true })
+            return db.Article.findOneAndUpdate({_id: req.params.id },{ $push: { comment: dbComment}}, { new: true });
         })
         .then(function (dbArticle) {
             res.json(dbArticle)
@@ -108,18 +103,20 @@ app.post("/article/:id", function (req, res) {
         })
 });
 
-app.get("/article/:id", function(req, res){
+// Route for deleting comments for a specific article
+app.delete("/article/:id", function (req, res) {
     db.Comment.remove({
-        _id: mongoosejs.ObjectID(req.params.id)
+        _id: req.params.id
     },
-    function(err, removed){
-        if(err){
-            console.log(err)
-            // res.send(err)
-        } else {
-            console.log(removed)
-        }
-    })
+        function (err, removed) {
+            if (err) {
+                console.log(err)
+                // res.send(err)
+            } else {
+                console.log(removed)
+                res.json(removed)
+            }
+        })
 });
 
 app.listen(PORT, function () {
