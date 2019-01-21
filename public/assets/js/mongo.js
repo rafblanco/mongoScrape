@@ -25,5 +25,6 @@ $(document).ready(function(){
             location.reload();
         })
     })
+    $("#scrape-btn")
 
 })

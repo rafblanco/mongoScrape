@@ -1,5 +1,8 @@
 <div id="wrapper">
-    <h1>Article Scraper</h1>
+    <div>
+        <h1>Article Scraper</h1>
+        <button id="scrape-btn">Scrape Site</button>
+    </div>
     <div class="jumbotron">
         <img src="/assets/img/newspaper.jpg">
     </div>
@@ -35,7 +38,7 @@
                 </div>
                 <div class="modal-body comment-section">
                     {{#each comment}}
-                        <div data-comment={{_id}}>{{comment}} <button class="delete-comment">&times;</button></div>
+                    <div data-comment={{_id}}>{{comment}} <button class="delete-comment">&times;</button></div>
                     {{/each}}
                 </div>
                 <div>
